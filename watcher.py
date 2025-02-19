@@ -1,16 +1,15 @@
-import os
 import json
+from pathlib import Path
 from typing import Any
-import pprint
+
 from kitty.boss import Boss
 from kitty.window import Window
 
-
-STATE_PATH = os.path.expanduser("~/.config/kitty/state.json")
+STATE_PATH = Path.home() / ".config" / "kitty" / "state.json"
 
 
 def update_state(boss: Boss, window: Window, is_window_start: bool = False) -> None:
-    if not os.path.exists(STATE_PATH):
+    if not STATE_PATH.exists():
         return
 
     ls = json.loads(boss.call_remote_control(window, ("ls",)))

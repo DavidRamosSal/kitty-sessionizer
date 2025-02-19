@@ -1,10 +1,10 @@
-from pathlib import Path
 import argparse
 import json
 import subprocess
-from typing import Dict, List, Any
-from kitty.boss import Boss
+from pathlib import Path
+from typing import Any, Dict, List
 
+from kitty.boss import Boss
 
 STATE_PATH = Path.home() / ".config" / "kitty" / "state.json"
 
@@ -15,7 +15,7 @@ def env_to_str(env):
 
 def replicate_workspace(boss: Boss, tabs: List[Dict[str, Any]]) -> None:
     first_session_window = True
-    first_tab_window = True
+    first_tab_window = False
     for tab in tabs:
         for window in tab["windows"]:
             window_type = "window"
@@ -26,9 +26,9 @@ def replicate_workspace(boss: Boss, tabs: List[Dict[str, Any]]) -> None:
             if first_tab_window:
                 window_type = "tab"
 
-            cmdline = " ".join(
-                f"{cmd}" for cmd in window["foreground_processes"][0]["cmdline"]
-            )
+            # cmdline = " ".join(
+            #     f"{cmd}" for cmd in window["foreground_processes"][0]["cmdline"]
+            # )
             envs = tuple(
                 item
                 for key, val in window["env"].items()
@@ -46,14 +46,11 @@ def replicate_workspace(boss: Boss, tabs: List[Dict[str, Any]]) -> None:
                     "launch",
                     "--type",
                     window_type,
-                    "--title",
-                    tab["title"],
                     "--cwd",
-                    window["cwd"],
+                    window["foreground_processes"][0]["cwd"],
                     *envs,
                     *vars,
                     "--hold",
-                    cmdline,
                 ),
             )
 
