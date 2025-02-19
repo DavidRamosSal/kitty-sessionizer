@@ -58,9 +58,10 @@ def on_resize(boss: Boss, window: Window, data: dict[str, Any]) -> None:
     update_state(boss, window, is_window_start=True)
 
 
-# def on_close(boss: Boss, window: Window, data: dict[str, Any]) -> None:
-#     update_state(boss, window)
-
-
 def on_cmd_startstop(boss: Boss, window: Window, data: dict[str, Any]) -> None:
     update_state(boss, window)
+
+
+# I thought I could grab the state of the window that was closed but it's not working right now
+# def on_close(boss: Boss, window: Window, data: dict[str, Any]) -> None:
+#     update_state(boss, window)

@@ -9,10 +9,6 @@ from kitty.boss import Boss
 STATE_PATH = Path.home() / ".config" / "kitty" / "state.json"
 
 
-def env_to_str(env):
-    return " ".join(f"--env {key}={value}" for key, value in env.items())
-
-
 def replicate_workspace(boss: Boss, tabs: List[Dict[str, Any]]) -> None:
     first_session_window = True
     first_tab_window = False
@@ -26,6 +22,8 @@ def replicate_workspace(boss: Boss, tabs: List[Dict[str, Any]]) -> None:
             if first_tab_window:
                 window_type = "tab"
 
+            # this would allow to re run the commands on session resurrection
+            # but the executables are not being recognized so better left out for now
             # cmdline = " ".join(
             #     f"{cmd}" for cmd in window["foreground_processes"][0]["cmdline"]
             # )
@@ -51,6 +49,7 @@ def replicate_workspace(boss: Boss, tabs: List[Dict[str, Any]]) -> None:
                     *envs,
                     *vars,
                     "--hold",
+                    # cmdline,
                 ),
             )
 
@@ -141,7 +140,6 @@ def handle_result(
             json.dump(state, file)
             return
 
-    # now comes the actual reproduction of the environment
     for idx, session in enumerate(sessions):
         if project_path.name == session:
             replicate_workspace(boss, state[idx]["tabs"])
