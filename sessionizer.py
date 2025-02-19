@@ -1,28 +1,77 @@
-import os
 from pathlib import Path
 import argparse
-import sys
 import json
 import subprocess
-from typing import List
-from pprint import pprint
+from typing import Dict, List, Any
 from kitty.boss import Boss
-from kittens.tui.handler import kitten_ui
 
 
-STATE_PATH = os.path.expanduser("~/.config/kitty/state.json")
+STATE_PATH = Path.home() / ".config" / "kitty" / "state.json"
 
 
-# @kitten_ui(allow_remote_control=True)
+def env_to_str(env):
+    return " ".join(f"--env {key}={value}" for key, value in env.items())
+
+
+def replicate_workspace(boss: Boss, tabs: List[Dict[str, Any]]) -> None:
+    first_session_window = True
+    first_tab_window = True
+    for tab in tabs:
+        for window in tab["windows"]:
+            window_type = "window"
+
+            if first_session_window:
+                window_type = "os-window"
+                first_session_window = False
+            if first_tab_window:
+                window_type = "tab"
+
+            cmdline = " ".join(
+                f"{cmd}" for cmd in window["foreground_processes"][0]["cmdline"]
+            )
+            envs = tuple(
+                item
+                for key, val in window["env"].items()
+                for item in ("--env", f"{key}={val}")
+            )
+            vars = tuple(
+                item
+                for key, val in window["user_vars"].items()
+                for item in ("--var", f"{key}={val}")
+            )
+
+            boss.call_remote_control(
+                None,
+                (
+                    "launch",
+                    "--type",
+                    window_type,
+                    "--title",
+                    tab["title"],
+                    "--cwd",
+                    window["cwd"],
+                    *envs,
+                    *vars,
+                    "--hold",
+                    cmdline,
+                ),
+            )
+
+            if first_tab_window:
+                boss.call_remote_control(None, ("goto-layout", tab["layout"]))
+                first_tab_window = False
+
+        first_tab_window = True
+
+
 def main(args: list[str]) -> str:
     parser = argparse.ArgumentParser()
     parser.add_argument("--project_dir", dest="sessionizer", action="append")
 
     opts = parser.parse_args(args[1:])
-    project_dir = str(opts.sessionizer[0])
+    project_dir = Path(opts.sessionizer[0])
 
-    p = Path(project_dir)
-    projects = [str(subdir) for subdir in p.iterdir() if subdir.is_dir()]
+    projects = [str(subdir) for subdir in project_dir.iterdir() if subdir.is_dir()]
     projects.sort()
 
     answer = subprocess.run(
@@ -41,8 +90,62 @@ def handle_result(
     if answer == "":
         return
 
-    if not os.path.exists(STATE_PATH):
-        # here goes a plain os window in the new cwd
+    project_path = Path(answer)
+    w = boss.window_id_map.get(target_window_id)
+
+    if not STATE_PATH.exists():
         boss.call_remote_control(
-            None, ("launch", "--type", "os-window", "--cwd", answer)
+            None,
+            (
+                "launch",
+                "--type",
+                "os-window",
+                "--cwd",
+                str(project_path),
+                "--var",
+                f"session_name={project_path.name}",
+            ),
         )
+        boss.call_remote_control(w, ("close-window", "--self"))
+
+        ls = json.loads(boss.call_remote_control(None, ("ls",)))
+
+        state = [{"session_name": project_path.name, "tabs": ls[0]["tabs"]}]
+
+        with open(STATE_PATH, "w") as file:
+            json.dump(state, file, indent=4)
+            return
+
+    with open(STATE_PATH, "r") as file:
+        state = json.load(file)
+
+    sessions = [session["session_name"] for session in state]
+
+    if project_path.name not in sessions:
+        boss.call_remote_control(
+            None,
+            (
+                "launch",
+                "--type",
+                "os-window",
+                "--cwd",
+                str(project_path),
+                "--var",
+                str(project_path.name),
+            ),
+        )
+        boss.call_remote_control(w, ("close-window", "--self"))
+
+        ls = json.loads(boss.call_remote_control(None, ("ls",)))
+
+        state.append({"session_name": project_path.name, "tabs": ls[0]["tabs"]})
+
+        with open(STATE_PATH, "w"):
+            json.dump(state, file)
+            return
+
+    # now comes the actual reproduction of the environment
+    for idx, session in enumerate(sessions):
+        if project_path.name == session:
+            replicate_workspace(boss, state[idx]["tabs"])
+            boss.call_remote_control(w, ("close-window", "--self"))

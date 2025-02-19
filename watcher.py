@@ -1,7 +1,7 @@
 import os
 import json
 from typing import Any
-
+import pprint
 from kitty.boss import Boss
 from kitty.window import Window
 
@@ -9,21 +9,42 @@ from kitty.window import Window
 STATE_PATH = os.path.expanduser("~/.config/kitty/state.json")
 
 
-def update_state(boss: Boss, window: Window) -> None:
+def update_state(boss: Boss, window: Window, is_window_start: bool = False) -> None:
     if not os.path.exists(STATE_PATH):
         return
 
     ls = json.loads(boss.call_remote_control(window, ("ls",)))
-    user_vars = ls[0]["tabs"][0]["windows"][0]["user_vars"]
 
-    if "session_name" not in user_vars:
+    all_user_vars = [tab["windows"][0]["user_vars"] for tab in ls[0]["tabs"]]
+    session_name = next(
+        (
+            user_vars["session_name"]
+            for user_vars in all_user_vars
+            if "session_name" in user_vars
+        ),
+        None,
+    )
+
+    if session_name is None:
         return
+
+    # hacky way to set the session_name user variable on new windows that are opened interactively
+    if is_window_start:
+        boss.call_remote_control(
+            window,
+            (
+                "set_user_vars",
+                f"--match=id:{window.id}",
+                f"session_name={session_name}",
+            ),
+        )
+        ls = json.loads(boss.call_remote_control(window, ("ls",)))
 
     with open(STATE_PATH, "r") as file:
         state = json.load(file)
 
     for idx, session in enumerate(state):
-        if session["session_name"] == user_vars["session_name"]:
+        if session["session_name"] == session_name:
             state[idx]["tabs"] = ls[0]["tabs"]
 
     with open(STATE_PATH, "w") as file:
@@ -35,11 +56,11 @@ def on_resize(boss: Boss, window: Window, data: dict[str, Any]) -> None:
     if data["old_geometry"].xnum != 0 and data["old_geometry"].ynum != 0:
         return
 
-    update_state(boss, window)
+    update_state(boss, window, is_window_start=True)
 
 
-def on_close(boss: Boss, window: Window, data: dict[str, Any]) -> None:
-    update_state(boss, window)
+# def on_close(boss: Boss, window: Window, data: dict[str, Any]) -> None:
+#     update_state(boss, window)
 
 
 def on_cmd_startstop(boss: Boss, window: Window, data: dict[str, Any]) -> None:
