@@ -2,7 +2,6 @@ import argparse
 import json
 import subprocess
 from pathlib import Path
-from pprint import pprint
 from typing import Any, Dict, List
 
 from kitty.boss import Boss

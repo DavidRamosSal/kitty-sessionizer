@@ -39,6 +39,15 @@ def update_state(boss: Boss, window: Window, is_window_start: bool = False) -> N
         )
         ls = json.loads(boss.call_remote_control(window, ("ls",)))
 
+    # removing ask windows that get injected into the state
+    # when clossing a window while a program is running
+    for tab in ls[0]["tabs"]:
+        tab["windows"] = [
+            window
+            for window in tab["windows"]
+            if "kitten ask" not in " ".join(window["cmdline"])
+        ]
+
     with open(STATE_PATH, "r") as file:
         state = json.load(file)
 
