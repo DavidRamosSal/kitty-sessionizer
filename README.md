@@ -1,6 +1,9 @@
 # kitty-sessionizer
 Custom kitten that helps you manage workspaces by offering a simple TUI project selector and session persistence (only tabs and very simple pane layouts for now).
 
+## Demo
+![](demo.gif)
+
 ## Installation
 Ensure you have [fzf](https://github.com/junegunn/fzf) installed for the TUI.
 
@@ -25,6 +28,8 @@ Finally add the global watcher to your configuration file (this is necessary to 
 watcher sessionizer/watcher.py
 ```
 
+**Note:** A json file contaning a serialized version of the OS Window state will be stored at the kitty configuration folder (eg. `.config/kitty/state.json`)
+
 ## Limitations
 - Window start might be a bit slower due to the watcher script.
 - Window size is not restored.
@@ -32,3 +37,4 @@ watcher sessionizer/watcher.py
 - Last focus is saved but not being restored as of now (might implement soon) 
 - Last command executed is saved but not restored (might be doable but I'm having some trouble making it work consistently)
 - Scroll history is not being saved (might try to implement)
+
