@@ -130,7 +130,7 @@ def handle_result(
                 "--cwd",
                 str(project_path),
                 "--var",
-                str(project_path.name),
+                f"session_name={project_path.name}",
             ),
         )
 
