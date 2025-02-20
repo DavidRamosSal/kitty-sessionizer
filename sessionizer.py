@@ -136,8 +136,8 @@ def handle_result(
 
         state.append({"session_name": project_path.name, "tabs": ls[0]["tabs"]})
 
-        with open(STATE_PATH, "w"):
-            json.dump(state, file)
+        with open(STATE_PATH, "w") as file:
+            json.dump(state, file, indent=4)
             return
 
     for idx, session in enumerate(sessions):
