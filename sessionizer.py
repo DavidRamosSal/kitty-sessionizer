@@ -2,6 +2,7 @@ import argparse
 import json
 import subprocess
 from pathlib import Path
+from pprint import pprint
 from typing import Any, Dict, List
 
 from kitty.boss import Boss
@@ -90,7 +91,7 @@ def handle_result(
     w = boss.window_id_map.get(target_window_id)
 
     if not STATE_PATH.exists():
-        boss.call_remote_control(
+        new_window_id = boss.call_remote_control(
             None,
             (
                 "launch",
@@ -104,7 +105,9 @@ def handle_result(
         )
         boss.call_remote_control(w, ("close-window", "--self"))
 
-        ls = json.loads(boss.call_remote_control(None, ("ls",)))
+        ls = json.loads(
+            boss.call_remote_control(None, ("ls", f"--match=id:{new_window_id}"))
+        )
 
         state = [{"session_name": project_path.name, "tabs": ls[0]["tabs"]}]
 
@@ -118,7 +121,7 @@ def handle_result(
     sessions = [session["session_name"] for session in state]
 
     if project_path.name not in sessions:
-        boss.call_remote_control(
+        new_window_id = boss.call_remote_control(
             None,
             (
                 "launch",
@@ -130,9 +133,12 @@ def handle_result(
                 str(project_path.name),
             ),
         )
+
         boss.call_remote_control(w, ("close-window", "--self"))
 
-        ls = json.loads(boss.call_remote_control(None, ("ls",)))
+        ls = json.loads(
+            boss.call_remote_control(None, ("ls", f"--match=id:{new_window_id}"))
+        )
 
         state.append({"session_name": project_path.name, "tabs": ls[0]["tabs"]})
 

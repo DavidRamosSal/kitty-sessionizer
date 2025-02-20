@@ -35,4 +35,3 @@ Note the relative path `./` it is very important to add it.
 - Last focus is saved but not being restored as of now (might implement soon) 
 - Last command executed is saved but not restored (might be doable but I'm having some trouble making it work consistently)
 - Scroll history is not being saved (might try to implement)
-- Funky state saving when closing OS windows soon after creating windows or executing commands.
