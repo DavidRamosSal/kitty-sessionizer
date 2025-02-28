@@ -15,18 +15,29 @@ def replicate_workspace(boss: Boss, tabs: List[Dict[str, Any]]) -> None:
     for tab in tabs:
         for window in tab["windows"]:
             window_type = "window"
-
             if first_session_window:
                 window_type = "os-window"
                 first_session_window = False
             if first_tab_window:
                 window_type = "tab"
 
-            # this would allow to re run the commands on session resurrection
-            # but the executables are not being recognized so better left out for now
-            # cmdline = " ".join(
-            #     f"{cmd}" for cmd in window["foreground_processes"][0]["cmdline"]
-            # )
+            # cwd is overdefined in the ls output and the behaviour
+            # inconsistent, in my testing this sort of works
+            if window["foreground_processes"] == []:
+                cwd = window["cwd"]
+            else:
+                cwd = window["foreground_processes"][0]["cwd"]
+
+            # the command line status is also overdefined and the
+            # behaviour inconsistent, in my testing this sort of works
+            cmdline = None
+            if window["foreground_processes"] != []:
+                joint_cmd_line = " ".join(window["foreground_processes"][0]["cmdline"])
+                if joint_cmd_line == window["last_reported_cmdline"]:
+                    cmdline = window["last_reported_cmdline"].split()
+                if "run-shell" in window["foreground_processes"][0]["cmdline"]:
+                    cmdline = window["foreground_processes"][1]["cmdline"]
+
             envs = tuple(
                 item
                 for key, val in window["env"].items()
@@ -38,20 +49,35 @@ def replicate_workspace(boss: Boss, tabs: List[Dict[str, Any]]) -> None:
                 for item in ("--var", f"{key}={val}")
             )
 
-            boss.call_remote_control(
-                None,
-                (
-                    "launch",
-                    "--type",
-                    window_type,
-                    "--cwd",
-                    window["foreground_processes"][0]["cwd"],
-                    *envs,
-                    *vars,
-                    "--hold",
-                    # cmdline,
-                ),
-            )
+            if cmdline is None:
+                boss.call_remote_control(
+                    None,
+                    (
+                        "launch",
+                        "--type",
+                        window_type,
+                        "--cwd",
+                        cwd,
+                        *envs,
+                        *vars,
+                        "--hold",
+                    ),
+                )
+            else:
+                boss.call_remote_control(
+                    None,
+                    (
+                        "launch",
+                        "--type",
+                        window_type,
+                        "--cwd",
+                        cwd,
+                        *envs,
+                        *vars,
+                        "--hold",
+                        *cmdline,
+                    ),
+                )
 
             if first_tab_window:
                 boss.call_remote_control(None, ("goto-layout", tab["layout"]))

@@ -39,14 +39,10 @@ def update_state(boss: Boss, window: Window, is_window_start: bool = False) -> N
         )
         ls = json.loads(boss.call_remote_control(window, ("ls",)))
 
-    # removing ask windows that get injected into the state
-    # when clossing a window while a program is running
-    for tab in ls[0]["tabs"]:
-        tab["windows"] = [
-            window
-            for window in tab["windows"]
-            if "kitten ask" not in " ".join(window["cmdline"])
-        ]
+        for tab in ls[0]["tabs"]:
+            for wndow in tab["windows"]:
+                if "kitten ask" in " ".join(wndow["cmdline"]):
+                    return
 
     with open(STATE_PATH, "r") as file:
         state = json.load(file)
@@ -69,8 +65,3 @@ def on_resize(boss: Boss, window: Window, data: dict[str, Any]) -> None:
 
 def on_cmd_startstop(boss: Boss, window: Window, data: dict[str, Any]) -> None:
     update_state(boss, window)
-
-
-# I thought I could grab the state of the window that was closed but it's not working right now
-# def on_close(boss: Boss, window: Window, data: dict[str, Any]) -> None:
-#     update_state(boss, window)
