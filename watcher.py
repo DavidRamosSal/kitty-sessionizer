@@ -65,3 +65,7 @@ def on_resize(boss: Boss, window: Window, data: dict[str, Any]) -> None:
 
 def on_cmd_startstop(boss: Boss, window: Window, data: dict[str, Any]) -> None:
     update_state(boss, window)
+
+
+def on_focus_change(boss: Boss, window: Window, data: dict[str, Any]) -> None:
+    update_state(boss, window)

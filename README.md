@@ -1,5 +1,9 @@
 # kitty-sessionizer
-Custom kitten that helps you manage workspaces by offering a simple TUI project selector and local session resurrection (only tabs and very simple pane layouts for now).
+Custom kitten that helps you manage workspaces by offering a simple TUI project selector and local session resurrection of:
+- tabs
+- simple layouts
+- commands running
+- last focused tab
 
 ## Demo
 ![](demo.gif)
@@ -7,7 +11,7 @@ Custom kitten that helps you manage workspaces by offering a simple TUI project 
 ## Installation
 Ensure you have [fzf](https://github.com/junegunn/fzf) installed for the TUI.
 
-Then clone the repo into your kitty configuration directory (assuming `~/config/kitty/` here, adjust if necessary):
+Then clone the repo into your kitty configuration directory (assuming `~/.config/kitty/` here, adjust if necessary):
 ```
 git clone https://github.com/DavidRamosSal/kitty-sessionizer.git ~/.config/kitty/sessionizer
 ```
@@ -35,6 +39,5 @@ watcher sessionizer/watcher.py
 - Window start might be a bit slower due to the watcher script.
 - Window size is not restored.
 - Complex layouts (anything more than some tabs and panes without bias) will not be reproduced accurately.
-- Last focus is saved but not being restored as of now (might implement soon) 
 - Scroll history is not being saved (might try to implement)
 

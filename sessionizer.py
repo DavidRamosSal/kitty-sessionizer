@@ -12,6 +12,8 @@ STATE_PATH = Path.home() / ".config" / "kitty" / "state.json"
 def replicate_workspace(boss: Boss, tabs: List[Dict[str, Any]]) -> None:
     first_session_window = True
     first_tab_window = False
+    focused_tab = None
+
     for tab in tabs:
         for window in tab["windows"]:
             window_type = "window"
@@ -83,7 +85,16 @@ def replicate_workspace(boss: Boss, tabs: List[Dict[str, Any]]) -> None:
                 boss.call_remote_control(None, ("goto-layout", tab["layout"]))
                 first_tab_window = False
 
+        if tab["is_focused"]:
+            focused_tab = tab["id"]
+
         first_tab_window = True
+
+    boss.call_remote_control(
+        None,
+        ("focus-tab", f"--match=id:{focused_tab}", "--no-response"),
+    )
+    boss.call_remote_control(None, ("close-window", "--self"))
 
 
 def main(args: list[str]) -> str:
