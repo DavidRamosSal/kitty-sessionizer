@@ -36,6 +36,5 @@ watcher sessionizer/watcher.py
 - Window size is not restored.
 - Complex layouts (anything more than some tabs and panes without bias) will not be reproduced accurately.
 - Last focus is saved but not being restored as of now (might implement soon) 
-- Last command executed is saved but not restored (might be doable but I'm having some trouble making it work consistently)
 - Scroll history is not being saved (might try to implement)
 
