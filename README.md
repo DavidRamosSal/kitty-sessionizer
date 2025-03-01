@@ -6,7 +6,7 @@ Custom kitten that helps you manage workspaces by offering a simple TUI project 
 - last focused tab
 
 ## Demo
-![](demo.gif)
+![](demo.gif?)
 
 ## Installation
 Ensure you have [fzf](https://github.com/junegunn/fzf) installed for the TUI.
