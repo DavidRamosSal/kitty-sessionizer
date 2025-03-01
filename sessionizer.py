@@ -51,35 +51,20 @@ def replicate_workspace(boss: Boss, tabs: List[Dict[str, Any]]) -> None:
                 for item in ("--var", f"{key}={val}")
             )
 
-            if cmdline is None:
-                boss.call_remote_control(
-                    None,
-                    (
-                        "launch",
-                        "--type",
-                        window_type,
-                        "--cwd",
-                        cwd,
-                        *envs,
-                        *vars,
-                        "--hold",
-                    ),
-                )
-            else:
-                boss.call_remote_control(
-                    None,
-                    (
-                        "launch",
-                        "--type",
-                        window_type,
-                        "--cwd",
-                        cwd,
-                        *envs,
-                        *vars,
-                        "--hold",
-                        *cmdline,
-                    ),
-                )
+            boss.call_remote_control(
+                None,
+                (
+                    "launch",
+                    "--type",
+                    window_type,
+                    "--cwd",
+                    cwd,
+                    *envs,
+                    *vars,
+                    "--hold",
+                    *(cmdline or ()),
+                ),
+            )
 
             if first_tab_window:
                 boss.call_remote_control(None, ("goto-layout", tab["layout"]))
