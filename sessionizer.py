@@ -90,11 +90,12 @@ def replicate_workspace(boss: Boss, tabs: List[Dict[str, Any]]) -> None:
 
         first_tab_window = True
 
-    boss.call_remote_control(
-        None,
-        ("focus-tab", f"--match=id:{focused_tab}", "--no-response"),
-    )
-    boss.call_remote_control(None, ("close-window", "--self"))
+    if len(tabs) > 1:
+        boss.call_remote_control(
+            None,
+            ("focus-tab", f"--match=id:{focused_tab}", "--no-response"),
+        )
+        boss.call_remote_control(None, ("close-window", "--self"))
 
 
 def main(args: list[str]) -> str:
@@ -142,7 +143,7 @@ def handle_result(
         boss.call_remote_control(w, ("close-window", "--self"))
 
         ls = json.loads(
-            boss.call_remote_control(None, ("ls", f"--match=id:{new_window_id}"))
+            boss.call_remote_control(None, ("ls", f"--match=id:{new_window_id}"))  # type: ignore[arg-type]
         )
 
         state = [{"session_name": project_path.name, "tabs": ls[0]["tabs"]}]
@@ -173,7 +174,7 @@ def handle_result(
         boss.call_remote_control(w, ("close-window", "--self"))
 
         ls = json.loads(
-            boss.call_remote_control(None, ("ls", f"--match=id:{new_window_id}"))
+            boss.call_remote_control(None, ("ls", f"--match=id:{new_window_id}"))  # type: ignore[arg-type]
         )
 
         state.append({"session_name": project_path.name, "tabs": ls[0]["tabs"]})

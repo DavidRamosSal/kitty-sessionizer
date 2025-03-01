@@ -12,7 +12,7 @@ def update_state(boss: Boss, window: Window, is_window_start: bool = False) -> N
     if not STATE_PATH.exists():
         return
 
-    ls = json.loads(boss.call_remote_control(window, ("ls",)))
+    ls = json.loads(boss.call_remote_control(window, ("ls",)))  # type: ignore[arg-type]
 
     all_user_vars = [tab["windows"][0]["user_vars"] for tab in ls[0]["tabs"]]
     session_name = next(
@@ -37,7 +37,7 @@ def update_state(boss: Boss, window: Window, is_window_start: bool = False) -> N
                 f"session_name={session_name}",
             ),
         )
-        ls = json.loads(boss.call_remote_control(window, ("ls",)))
+        ls = json.loads(boss.call_remote_control(window, ("ls",)))  # type: ignore[arg-type]
 
         for tab in ls[0]["tabs"]:
             for wndow in tab["windows"]:
