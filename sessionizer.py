@@ -35,7 +35,7 @@ def replicate_workspace(boss: Boss, tabs: List[Dict[str, Any]]) -> None:
             cmdline = None
             if window["foreground_processes"] != []:
                 joint_cmd_line = " ".join(window["foreground_processes"][0]["cmdline"])
-                if joint_cmd_line == window["last_reported_cmdline"]:
+                if window["last_reported_cmdline"] in joint_cmd_line:
                     cmdline = window["last_reported_cmdline"].split()
                 if "run-shell" in window["foreground_processes"][0]["cmdline"]:
                     cmdline = window["foreground_processes"][1]["cmdline"]
