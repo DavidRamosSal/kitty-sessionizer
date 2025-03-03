@@ -39,19 +39,9 @@ def update_state(boss: Boss, window: Window, is_window_start: bool = False) -> N
 
     session_name = window.user_vars["session_name"]
 
-    print(
-        "am past the damn if, this is a cmd start thing",
-        window.child.argv,
-        window.needs_attention,
-        window.title_stack,
-        window.actions_on_close,
-        window.actions_on_focus_change,
-        window.child_is_launched,
-    )
-
     ls = json.loads(
-        boss.call_remote_control(window, ("ls", "--match", 'not cmdline:"ask"'))  # type: ignore[arg-type]
-    )
+        boss.call_remote_control(window, ("ls",))  # type: ignore[arg-type]
+    )  # , "--match", 'not cmdline:"ask"'))
     with open(STATE_PATH, "r") as file:
         state = json.load(file)
 
