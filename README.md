@@ -36,7 +36,6 @@ watcher sessionizer/watcher.py
 
 ## Limitations
 - It only works locally.
-- Window start might be a bit slower due to the watcher script.
 - Window size is not restored.
 - Complex layouts (anything more than some tabs and panes without bias) will not be reproduced accurately.
 - Scroll history is not being saved (might try to implement)

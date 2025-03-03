@@ -12,23 +12,22 @@ def update_state(boss: Boss, window: Window, is_window_start: bool = False) -> N
     if not STATE_PATH.exists():
         return
 
-    ls = json.loads(boss.call_remote_control(window, ("ls",)))  # type: ignore[arg-type]
+    if "session_name" not in window.user_vars:
+        if not is_window_start:
+            return
 
-    all_user_vars = [tab["windows"][0]["user_vars"] for tab in ls[0]["tabs"]]
-    session_name = next(
-        (
-            user_vars["session_name"]
-            for user_vars in all_user_vars
-            if "session_name" in user_vars
-        ),
-        None,
-    )
+        if "ask" in window.child.argv:
+            return
 
-    if session_name is None:
-        return
+        try:
+            ls_output = boss.call_remote_control(
+                window, ("ls", "--match", "var:session_name")
+            )
+            ls = json.loads(ls_output)  # type: ignore[arg-type]
+            session_name = ls[0]["tabs"][0]["windows"][0]["user_vars"]["session_name"]
+        except Exception:
+            return
 
-    # hacky way to set the session_name user variable on new windows that are opened interactively
-    if is_window_start:
         boss.call_remote_control(
             window,
             (
@@ -37,19 +36,17 @@ def update_state(boss: Boss, window: Window, is_window_start: bool = False) -> N
                 f"session_name={session_name}",
             ),
         )
-        ls = json.loads(boss.call_remote_control(window, ("ls",)))  # type: ignore[arg-type]
 
-        for tab in ls[0]["tabs"]:
-            for wndow in tab["windows"]:
-                if "kitten ask" in " ".join(wndow["cmdline"]):
-                    return
+    session_name = window.user_vars["session_name"]
+
+    ls = json.loads(boss.call_remote_control(window, ("ls",)))  # type: ignore[arg-type]
 
     with open(STATE_PATH, "r") as file:
         state = json.load(file)
 
-    for idx, session in enumerate(state):
+    for session in state:
         if session["session_name"] == session_name:
-            state[idx]["tabs"] = ls[0]["tabs"]
+            session["tabs"] = ls[0]["tabs"]
 
     with open(STATE_PATH, "w") as file:
         json.dump(state, file, indent=4)
@@ -64,6 +61,7 @@ def on_resize(boss: Boss, window: Window, data: dict[str, Any]) -> None:
 
 
 def on_cmd_startstop(boss: Boss, window: Window, data: dict[str, Any]) -> None:
+    # print(window.user_vars, window.cmd_output)
     update_state(boss, window)
 
 
