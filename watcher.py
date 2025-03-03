@@ -12,11 +12,11 @@ def update_state(boss: Boss, window: Window, is_window_start: bool = False) -> N
     if not STATE_PATH.exists():
         return
 
+    if "ask" in window.child.argv:
+        return
+
     if "session_name" not in window.user_vars:
         if not is_window_start:
-            return
-
-        if "ask" in window.child.argv:
             return
 
         try:
@@ -39,8 +39,19 @@ def update_state(boss: Boss, window: Window, is_window_start: bool = False) -> N
 
     session_name = window.user_vars["session_name"]
 
-    ls = json.loads(boss.call_remote_control(window, ("ls",)))  # type: ignore[arg-type]
+    print(
+        "am past the damn if, this is a cmd start thing",
+        window.child.argv,
+        window.needs_attention,
+        window.title_stack,
+        window.actions_on_close,
+        window.actions_on_focus_change,
+        window.child_is_launched,
+    )
 
+    ls = json.loads(
+        boss.call_remote_control(window, ("ls", "--match", 'not cmdline:"ask"'))  # type: ignore[arg-type]
+    )
     with open(STATE_PATH, "r") as file:
         state = json.load(file)
 
@@ -53,7 +64,9 @@ def update_state(boss: Boss, window: Window, is_window_start: bool = False) -> N
 
 
 def on_resize(boss: Boss, window: Window, data: dict[str, Any]) -> None:
+    # print(window.child.argv)
     # with this condition, the state update is done only on window start
+    # print(data)
     if data["old_geometry"].xnum != 0 and data["old_geometry"].ynum != 0:
         return
 
@@ -61,9 +74,11 @@ def on_resize(boss: Boss, window: Window, data: dict[str, Any]) -> None:
 
 
 def on_cmd_startstop(boss: Boss, window: Window, data: dict[str, Any]) -> None:
-    # print(window.user_vars, window.cmd_output)
+    # print(data)
     update_state(boss, window)
 
 
 def on_focus_change(boss: Boss, window: Window, data: dict[str, Any]) -> None:
+    print(data)
+    # print(window.child.argv)
     update_state(boss, window)
