@@ -32,7 +32,7 @@ Finally add the global watcher to your configuration file (this is necessary to 
 watcher sessionizer/watcher.py
 ```
 
-**Note:** A json file contaning a serialized version of the OS Window state will be stored at the kitty configuration folder (eg. `.config/kitty/state.json`)
+**Note:** A json file containing a serialized version of the OS Window state will be stored at the kitty configuration folder (eg. `.config/kitty/state.json`). Back up your state as I am yet to implement good measures for dealing with state corruption.
 
 ## Limitations
 - It only works locally.
