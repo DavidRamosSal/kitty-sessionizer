@@ -5,8 +5,10 @@ Custom kitten that helps you manage workspaces by offering a simple TUI project 
 - commands running
 - last focused tab
 
+Session state is a stored in sqlite database (located at `~/.local/share/kitty/state.db`), that you can freely query, back-up and restore in new systems.
+
 ## Demo
-![](demo.gif)
+![](demo.gif?)
 
 ## Installation
 Ensure you have [fzf](https://github.com/junegunn/fzf) installed for the TUI.
@@ -32,11 +34,8 @@ Finally add the global watcher to your configuration file (this is necessary to 
 watcher sessionizer/watcher.py
 ```
 
-**Note:** A json file contaning a serialized version of the OS Window state will be stored at the kitty configuration folder (eg. `.config/kitty/state.json`)
-
 ## Limitations
 - It only works locally.
-- Window start might be a bit slower due to the watcher script.
 - Window size is not restored.
 - Complex layouts (anything more than some tabs and panes without bias) will not be reproduced accurately.
 - Scroll history is not being saved (might try to implement)

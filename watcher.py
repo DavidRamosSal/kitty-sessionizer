@@ -1,3 +1,4 @@
+import sqlite3
 import json
 from pathlib import Path
 from typing import Any
@@ -5,30 +6,93 @@ from typing import Any
 from kitty.boss import Boss
 from kitty.window import Window
 
-STATE_PATH = Path.home() / ".config" / "kitty" / "state.json"
+DB_PATH = Path.home() / ".local" / "share" / "kitty" / "state.db"
+
+IGNORE_LIST = {
+    "ls",
+    "cd",
+    "pwd",
+    "echo",
+    "cat",
+    "head",
+    "tail",
+    "touch",
+    "clear",
+    "less",
+    "more",
+    "man",
+    "grep",
+    "sed",
+    "awk",
+    "sort",
+    "uniq",
+    "wc",
+    "rm",
+    "mv",
+    "cp",
+    "chmod",
+    "chown",
+    "ln",
+    "true",
+    "false",
+    "test",
+    "which",
+    "type",
+    "alias",
+    "bg",
+    "fg",
+    "jobs",
+    "kill",
+    "ps",
+    "whoami",
+    "id",
+    "date",
+    "uptime",
+    "sleep",
+    "git",
+}
+
+
+def init_db() -> None:
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)  # Ensure parent directory exists
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("PRAGMA journal_mode = WAL;")  # Enable WAL for concurrency
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS sessions (
+                session_name TEXT PRIMARY KEY,
+                tabs TEXT
+            )
+        """)
+        conn.commit()
+
+
+init_db()
 
 
 def update_state(boss: Boss, window: Window, is_window_start: bool = False) -> None:
-    if not STATE_PATH.exists():
+    if "ask" in window.child.argv:
         return
 
-    ls = json.loads(boss.call_remote_control(window, ("ls",)))  # type: ignore[arg-type]
+    if "session_name" not in window.user_vars:
+        if not is_window_start:
+            return
 
-    all_user_vars = [tab["windows"][0]["user_vars"] for tab in ls[0]["tabs"]]
-    session_name = next(
-        (
-            user_vars["session_name"]
-            for user_vars in all_user_vars
-            if "session_name" in user_vars
-        ),
-        None,
-    )
+        try:
+            ls_output = boss.call_remote_control(
+                window, ("ls", "--match", "var:session_name")
+            )
+            ls = json.loads(ls_output)  # type: ignore[arg-type]
+            session_name = (
+                ls[0]
+                .get("tabs")[0]
+                .get("windows")[0]
+                .get("user_vars")
+                .get("session_name")
+            )
+        except Exception:
+            return
 
-    if session_name is None:
-        return
-
-    # hacky way to set the session_name user variable on new windows that are opened interactively
-    if is_window_start:
         boss.call_remote_control(
             window,
             (
@@ -37,35 +101,54 @@ def update_state(boss: Boss, window: Window, is_window_start: bool = False) -> N
                 f"session_name={session_name}",
             ),
         )
-        ls = json.loads(boss.call_remote_control(window, ("ls",)))  # type: ignore[arg-type]
 
-        for tab in ls[0]["tabs"]:
-            for wndow in tab["windows"]:
-                if "kitten ask" in " ".join(wndow["cmdline"]):
-                    return
+    session_name = window.user_vars["session_name"]
 
-    with open(STATE_PATH, "r") as file:
-        state = json.load(file)
+    ls_result = boss.call_remote_control(window, ("ls",))
 
-    for idx, session in enumerate(state):
-        if session["session_name"] == session_name:
-            state[idx]["tabs"] = ls[0]["tabs"]
+    if not ls_result:
+        return
 
-    with open(STATE_PATH, "w") as file:
-        json.dump(state, file, indent=4)
+    try:
+        kitty_ls = json.loads(ls_result)  # type: ignore[arg-type]
+    except json.JSONDecodeError:
+        print("Error: Failed to parse Kitty ls output as JSON.")
+        return
+
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM sessions WHERE session_name = ?", (session_name,))
+        if cursor.fetchone():
+            cursor.execute(
+                "UPDATE sessions SET tabs = ? WHERE session_name = ?",
+                (json.dumps(kitty_ls[0].get("tabs")), session_name),
+            )
+        else:
+            cursor.execute(
+                "INSERT INTO sessions (session_name, tabs) VALUES (?, ?)",
+                (session_name, json.dumps(kitty_ls[0].get("tabs"))),
+            )
+        conn.commit()
 
 
 def on_resize(boss: Boss, window: Window, data: dict[str, Any]) -> None:
     # with this condition, the state update is done only on window start
-    if data["old_geometry"].xnum != 0 and data["old_geometry"].ynum != 0:
-        return
-
-    update_state(boss, window, is_window_start=True)
+    if data["old_geometry"].xnum == 0 and data["old_geometry"].ynum == 0:
+        update_state(boss, window, is_window_start=True)
 
 
 def on_cmd_startstop(boss: Boss, window: Window, data: dict[str, Any]) -> None:
+    # ignore cmd stop events
+    if not data.get("is_start"):
+        return
+    # little hack to keep the execution of ephemeral commands snappy
+    if data.get("cmdline") in IGNORE_LIST:
+        return
     update_state(boss, window)
 
 
 def on_focus_change(boss: Boss, window: Window, data: dict[str, Any]) -> None:
+    # two events get executed when changing focus, ignore one
+    if not data.get("focused"):
+        return
     update_state(boss, window)
