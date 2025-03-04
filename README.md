@@ -5,7 +5,7 @@ Custom kitten that helps you manage workspaces by offering a simple TUI project 
 - commands running
 - last focused tab
 
-Session state is a stored in sqlite database (located at `~/.local/share/kitty/state.db`), that you can freely query, back-up and restore in new systems.
+Session state is a stored in a sqlite database (located at `~/.local/share/kitty/state.db`), that you can freely query, back-up and restore in new systems.
 
 ## Demo
 ![](demo.gif?)
