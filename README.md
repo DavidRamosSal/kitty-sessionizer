@@ -5,6 +5,8 @@ Custom kitten that helps you manage workspaces by offering a simple TUI project 
 - commands running
 - last focused tab
 
+Session state is a stored in sqlite database (located at `~/.local/share/kitty/state.db`), that you can freely query, back-up and restore in new systems.
+
 ## Demo
 ![](demo.gif?)
 
@@ -31,8 +33,6 @@ Finally add the global watcher to your configuration file (this is necessary to 
 
 watcher sessionizer/watcher.py
 ```
-
-**Note:** A json file containing a serialized version of the OS Window state will be stored at the kitty configuration folder (eg. `.config/kitty/state.json`). Back up your state as I am yet to implement good measures for dealing with state corruption.
 
 ## Limitations
 - It only works locally.
